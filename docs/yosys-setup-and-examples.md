@@ -2,94 +2,61 @@
 
 ## 1. Installation (Windows — No Admin Required)
 
-### Download OSS CAD Suite
+### OSS CAD Suite
 
-The OSS CAD Suite bundles **Yosys** (synthesis), **Icarus Verilog** (simulation), and **GTKWave** (waveform viewer) into a single package. We also use **Surfer** — a modern waveform viewer with a far cleaner UI than GTKWave.
+Bundles **Yosys** (synthesis), **Icarus Verilog** (simulation), and **GTKWave** (waveforms).
 
-1. Download the latest Windows release from:  
-   https://github.com/YosysHQ/oss-cad-suite-build/releases  
-   File: `oss-cad-suite-windows-x64-YYYYMMDD.exe` (~316 MB)
+- **Download:** https://github.com/YosysHQ/oss-cad-suite-build/releases  
+  Pick `oss-cad-suite-windows-x64-YYYYMMDD.exe` (~316 MB)
+- **Install:** Run the `.exe` → extract to `C:\oss-cad-suite\`
+- **Open:** Double-click `C:\oss-cad-suite\oss-cad-suite\start.bat`  
+  A terminal opens with all tools ready. Prompt shows `[OSS CAD Suite]`.
+- **Verify:** Type `yosys -V` and `iverilog -V` in that terminal.
 
-2. Run the self-extracting archive — extract to `C:\oss-cad-suite\`
+> No Linux, no WSL, no admin privileges required.  
+> For lab machines: copy the folder to a network drive; students just double-click `start.bat`.
 
-3. Open PowerShell and activate the environment:
-   ```powershell
-   . "C:\oss-cad-suite\oss-cad-suite\environment.ps1"
-   ```
+---
 
-4. Verify installation:
-   ```powershell
-   yosys -V        # Should show: Yosys 0.65+
-   iverilog -V     # Should show: Icarus Verilog version 14.x
-   ```
+### Surfer (Waveform Viewer)
 
-> **No Linux, no WSL, no admin privileges required.**  
-> For lab machines: copy the extracted folder to a network drive; students just run `start.bat`.
+Modern waveform viewer — much cleaner than GTKWave. Reads `.vcd` files.
 
-### Download Surfer (Waveform Viewer)
+- **Download:** https://gitlab.com/surfer-project/surfer/-/releases  
+  Pick `surfer_win_v*.zip` (~40 MB)
+- **Install:** Extract the zip to `C:\oss-cad-suite\surfer\`  
+  It contains a single `surfer.exe` — no installer needed.
+- **Open a waveform:** From the OSS CAD Suite terminal:
+  ```
+  C:\oss-cad-suite\surfer\surfer.exe adder_4bit.vcd
+  ```
+  Or simply drag-and-drop a `.vcd` file onto `surfer.exe`.
 
-Surfer is a modern, GPU-accelerated waveform viewer that reads `.vcd` files. It replaces GTKWave for a much better experience.
+**Key shortcuts:**
 
-1. Download the latest Windows binary from:  
-   https://gitlab.com/surfer-project/surfer/-/releases  
-   File: `surfer_win_v0.7.0.zip` (~40 MB)
-
-   Or use the direct link for the latest build:
-   ```powershell
-   $surferUrl = "https://gitlab.com/api/v4/projects/42073614/jobs/artifacts/main/raw/surfer_win.zip?job=windows_build"
-   Invoke-WebRequest -Uri $surferUrl -OutFile "C:\oss-cad-suite\surfer_win.zip" -UseBasicParsing
-   ```
-
-2. Extract to `C:\oss-cad-suite\surfer\`:
-   ```powershell
-   Expand-Archive -Path "C:\oss-cad-suite\surfer_win.zip" -DestinationPath "C:\oss-cad-suite\surfer" -Force
-   ```
-
-3. (Optional) Add to PATH or create a shortcut:
-   ```powershell
-   $env:PATH += ";C:\oss-cad-suite\surfer"
-   ```
-
-4. Open a VCD file:
-   ```powershell
-   surfer.exe waveform.vcd
-   ```
-
-**Key Surfer shortcuts:**
 | Action | Shortcut |
 |--------|----------|
 | Zoom to fit | Shift+F |
 | Zoom in/out | Scroll wheel |
 | Go to time | Ctrl+G |
 | Add marker | M |
-| Add divider | D |
 
-**Why Surfer over GTKWave:**
-- Modern dark/light themes, smooth rendering
-- Bus values displayed inline on waveforms
-- Drag-and-drop signal reordering
-- No DPI/scaling issues on high-res displays
-- Standalone binary — no install needed
+**To view signals:** Expand the hierarchy in the left sidebar → select signals → press **+** to add them to the waveform view.
 
-> GTKWave is still included in OSS CAD Suite if you prefer it, but Surfer is recommended for this course.
+> GTKWave is still available in OSS CAD Suite if needed, but Surfer is recommended for this course.
 
 ---
 
-## 2. SkyWater 130nm PDK Setup
+### SkyWater 130nm Standard Cell Library
 
-The SkyWater 130nm PDK provides real standard cell libraries (liberty `.lib` files) with timing and area data.
+Provides real cell data (area, timing) for synthesis exercises.
 
-### Download the Liberty File
+- **Download:** https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/master/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib  
+  (Right-click → Save As, or open the URL in a browser)
+- **Save to:** `C:\oss-cad-suite\sky130_fd_sc_hd__tt_025C_1v80.lib`
+- **What it is:** Typical corner (25°C, 1.8V), 334 standard cells, ~12 MB
 
-```powershell
-$libUrl = "https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/master/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib"
-Invoke-WebRequest -Uri $libUrl -OutFile "C:\oss-cad-suite\sky130_fd_sc_hd__tt_025C_1v80.lib" -UseBasicParsing
-```
-
-This gives you `sky130_fd_sc_hd__tt_025C_1v80.lib` (~12 MB) — the typical-typical corner (25°C, 1.8V) of the high-density standard cell library with 334 cells.
-
-### Cell Naming Convention
-
+**Cell naming convention:**
 ```
 sky130_fd_sc_hd__nand2_1
 │       │  │  │    │    └─ drive strength (1 = minimum size)
@@ -102,7 +69,22 @@ sky130_fd_sc_hd__nand2_1
 
 ---
 
-## 3. Basic Yosys Commands
+### Summary: What You Should Have After Setup
+
+```
+C:\oss-cad-suite\
+├── oss-cad-suite\
+│   ├── start.bat              ← double-click to open tools terminal
+│   ├── bin\                   ← yosys, iverilog, vvp, gtkwave, verilator
+│   └── ...
+├── surfer\
+│   └── surfer.exe             ← waveform viewer
+└── sky130_fd_sc_hd__tt_025C_1v80.lib  ← standard cell library
+```
+
+---
+
+## 2. Basic Yosys Commands
 
 | Command | Purpose |
 |---------|---------|
@@ -125,7 +107,7 @@ yosys -p "read_verilog design.v; synth -top top_module; stat"
 
 ---
 
-## 4. Example 1: Boolean Optimization
+## 3. Example 1: Boolean Optimization
 
 This demonstrates how Yosys optimizes redundant Boolean logic.
 
@@ -186,7 +168,7 @@ The tool may pick `sky130_fd_sc_hd__maj3_1` (majority-3 gate) since this functio
 
 ---
 
-## 5. Example 2: Behavioral Adder Decomposition
+## 4. Example 2: Behavioral Adder Decomposition
 
 This shows how a simple `a + b` is decomposed into gate-level hardware.
 
@@ -261,7 +243,7 @@ This produces a structural Verilog file referencing sky130 cells — the same fo
 
 ---
 
-## 6. Example 3: Latch Inference (What NOT to Do)
+## 5. Example 3: Latch Inference (What NOT to Do)
 
 ### Source: `examples/latch_bad.v`
 
@@ -313,7 +295,7 @@ yosys -p "read_verilog examples/latch_fixed.v; synth -top latch_fixed; stat"
 
 ---
 
-## 7. Simulation Flow (Icarus Verilog + GTKWave)
+## 6. Simulation Flow (Icarus Verilog + Surfer)
 
 ### Testbench: `examples/tb_adder_4bit.v`
 
@@ -352,21 +334,9 @@ iverilog -o sim.vvp examples/adder_4bit.v examples/tb_adder_4bit.v
 # Simulate (generates adder_4bit.vcd)
 vvp sim.vvp
 
-# View waveforms (Surfer — recommended)
+# View waveforms
 C:\oss-cad-suite\surfer\surfer.exe adder_4bit.vcd
-
-# Or if surfer is in PATH:
-surfer.exe adder_4bit.vcd
-
-# Alternative: GTKWave (bundled with OSS CAD Suite)
-gtkwave adder_4bit.vcd
 ```
-
-**Using Surfer:**
-1. Expand the hierarchy in the left sidebar (`tb_adder_4bit`)
-2. Click signals (`a`, `b`, `y`) or select all and press **+** to add to waveform
-3. Press **Shift+F** to zoom to fit all transitions
-4. Scroll to zoom, click to place cursor, read values at cursor position
 
 ### Expected console output:
 
@@ -382,7 +352,7 @@ All tests passed.
 
 ---
 
-## 8. Quick Reference: Full Synthesis + Simulation Workflow
+## 7. Quick Reference: Full Synthesis + Simulation Workflow
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -402,7 +372,7 @@ All tests passed.
 
 ---
 
-## 9. File Organization
+## 8. File Organization
 
 ```
 examples/
@@ -415,11 +385,11 @@ examples/
 
 ---
 
-## 10. Troubleshooting
+## 9. Troubleshooting
 
 | Issue | Fix |
 |-------|-----|
-| `yosys: command not found` | Run `. "C:\oss-cad-suite\oss-cad-suite\environment.ps1"` first |
+| `yosys: command not found` | Double-click `C:\oss-cad-suite\oss-cad-suite\start.bat` first |
 | Spaces in file path cause Yosys error | Copy files to a path without spaces (e.g., `C:\oss-cad-suite\`) |
 | `abc -g ... NOT` error | NOT is auto-included; use `abc -g AND,OR,XOR` without NOT |
 | Liberty file not found | Ensure `sky130_fd_sc_hd__tt_025C_1v80.lib` is in the working directory |
