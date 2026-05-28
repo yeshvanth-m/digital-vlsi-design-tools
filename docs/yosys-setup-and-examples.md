@@ -4,7 +4,7 @@
 
 ### Download OSS CAD Suite
 
-The OSS CAD Suite bundles **Yosys** (synthesis), **Icarus Verilog** (simulation), and **GTKWave** (waveform viewer) into a single package.
+The OSS CAD Suite bundles **Yosys** (synthesis), **Icarus Verilog** (simulation), and **GTKWave** (waveform viewer) into a single package. We also use **Surfer** — a modern waveform viewer with a far cleaner UI than GTKWave.
 
 1. Download the latest Windows release from:  
    https://github.com/YosysHQ/oss-cad-suite-build/releases  
@@ -21,11 +21,57 @@ The OSS CAD Suite bundles **Yosys** (synthesis), **Icarus Verilog** (simulation)
    ```powershell
    yosys -V        # Should show: Yosys 0.65+
    iverilog -V     # Should show: Icarus Verilog version 14.x
-   gtkwave --version
    ```
 
 > **No Linux, no WSL, no admin privileges required.**  
 > For lab machines: copy the extracted folder to a network drive; students just run `start.bat`.
+
+### Download Surfer (Waveform Viewer)
+
+Surfer is a modern, GPU-accelerated waveform viewer that reads `.vcd` files. It replaces GTKWave for a much better experience.
+
+1. Download the latest Windows binary from:  
+   https://gitlab.com/surfer-project/surfer/-/releases  
+   File: `surfer_win_v0.7.0.zip` (~40 MB)
+
+   Or use the direct link for the latest build:
+   ```powershell
+   $surferUrl = "https://gitlab.com/api/v4/projects/42073614/jobs/artifacts/main/raw/surfer_win.zip?job=windows_build"
+   Invoke-WebRequest -Uri $surferUrl -OutFile "C:\oss-cad-suite\surfer_win.zip" -UseBasicParsing
+   ```
+
+2. Extract to `C:\oss-cad-suite\surfer\`:
+   ```powershell
+   Expand-Archive -Path "C:\oss-cad-suite\surfer_win.zip" -DestinationPath "C:\oss-cad-suite\surfer" -Force
+   ```
+
+3. (Optional) Add to PATH or create a shortcut:
+   ```powershell
+   $env:PATH += ";C:\oss-cad-suite\surfer"
+   ```
+
+4. Open a VCD file:
+   ```powershell
+   surfer.exe waveform.vcd
+   ```
+
+**Key Surfer shortcuts:**
+| Action | Shortcut |
+|--------|----------|
+| Zoom to fit | Shift+F |
+| Zoom in/out | Scroll wheel |
+| Go to time | Ctrl+G |
+| Add marker | M |
+| Add divider | D |
+
+**Why Surfer over GTKWave:**
+- Modern dark/light themes, smooth rendering
+- Bus values displayed inline on waveforms
+- Drag-and-drop signal reordering
+- No DPI/scaling issues on high-res displays
+- Standalone binary — no install needed
+
+> GTKWave is still included in OSS CAD Suite if you prefer it, but Surfer is recommended for this course.
 
 ---
 
@@ -306,9 +352,21 @@ iverilog -o sim.vvp examples/adder_4bit.v examples/tb_adder_4bit.v
 # Simulate (generates adder_4bit.vcd)
 vvp sim.vvp
 
-# View waveforms
+# View waveforms (Surfer — recommended)
+C:\oss-cad-suite\surfer\surfer.exe adder_4bit.vcd
+
+# Or if surfer is in PATH:
+surfer.exe adder_4bit.vcd
+
+# Alternative: GTKWave (bundled with OSS CAD Suite)
 gtkwave adder_4bit.vcd
 ```
+
+**Using Surfer:**
+1. Expand the hierarchy in the left sidebar (`tb_adder_4bit`)
+2. Click signals (`a`, `b`, `y`) or select all and press **+** to add to waveform
+3. Press **Shift+F** to zoom to fit all transitions
+4. Scroll to zoom, click to place cursor, read values at cursor position
 
 ### Expected console output:
 
@@ -334,7 +392,7 @@ All tests passed.
 │  1. Write RTL          →  design.v                              │
 │  2. Write Testbench    →  tb_design.v                           │
 │  3. Simulate           →  iverilog + vvp → .vcd                 │
-│  4. View Waveforms     →  gtkwave design.vcd                    │
+│  4. View Waveforms     →  surfer design.vcd                     │
 │  5. Synthesize         →  yosys (generic gates or sky130)       │
 │  6. Read Reports       →  stat → area, cell count              │
 │  7. Export Netlist     →  write_verilog netlist.v               │
@@ -365,4 +423,6 @@ examples/
 | Spaces in file path cause Yosys error | Copy files to a path without spaces (e.g., `C:\oss-cad-suite\`) |
 | `abc -g ... NOT` error | NOT is auto-included; use `abc -g AND,OR,XOR` without NOT |
 | Liberty file not found | Ensure `sky130_fd_sc_hd__tt_025C_1v80.lib` is in the working directory |
+| Surfer shows empty waveform | Expand hierarchy in left panel → select signals → press **+** → **Shift+F** to zoom fit |
+| Surfer flagged by Windows Defender | False positive for Rust binaries; verify with [VirusTotal](https://www.virustotal.com/) if concerned |
 | GTKWave shows no signals | Click signals in left panel → "Append" → Ctrl+Shift+F to zoom fit |
