@@ -6,10 +6,10 @@
 
 Bundles **Yosys** (synthesis), **Icarus Verilog** (simulation), and **GTKWave** (waveforms).
 
-- **Download:** https://github.com/YosysHQ/oss-cad-suite-build/releases  
-  Pick `oss-cad-suite-windows-x64-YYYYMMDD.exe` (~316 MB)
-- **Install:** Run the `.exe` → extract to `C:\oss-cad-suite\`
-- **Open:** Double-click `C:\oss-cad-suite\oss-cad-suite\start.bat`  
+- **Download:** https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2026-05-28/oss-cad-suite-windows-x64-20260528.exe
+- **Create New Folder** Create a new folder under C drive and name it digital-design-tools: C:\digital-design-tools\
+- **Install:** Double-click the `.exe` → it will extract to `C:\digital-design-tools\oss-cad-suite\`
+- **Open:** Double-click `C:\digital-design-tools\oss-cad-suite\start.bat`  
   A terminal opens with all tools ready. Prompt shows `[OSS CAD Suite]`.
 - **Verify:** Type `yosys -V` and `iverilog -V` in that terminal.
 
@@ -22,13 +22,13 @@ Bundles **Yosys** (synthesis), **Icarus Verilog** (simulation), and **GTKWave** 
 
 Modern waveform viewer — much cleaner than GTKWave. Reads `.vcd` files.
 
-- **Download:** https://gitlab.com/surfer-project/surfer/-/releases  
-  Pick `surfer_win_v*.zip` (~40 MB)
-- **Install:** Extract the zip to `C:\oss-cad-suite\surfer\`  
+- **Download:** https://gitlab.com/api/v4/projects/42073614/packages/generic/surfer/v0.7.0/surfer_win_v0.7.0.zip
+- **Create New Folder** Create a new folder under C:\digital-design-tools\ and name it surfer
+- **Install:** Extract the zip to `C:\digital-design-tools\surfer\`
   It contains a single `surfer.exe` — no installer needed.
 - **Open a waveform:** From the OSS CAD Suite terminal:
   ```
-  C:\oss-cad-suite\surfer\surfer.exe adder_4bit.vcd
+  C:\digital-design-tools\surfer\surfer.exe adder_4bit.vcd
   ```
   Or simply drag-and-drop a `.vcd` file onto `surfer.exe`.
 
@@ -53,7 +53,8 @@ Provides real cell data (area, timing) for synthesis exercises.
 
 - **Download:** https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/master/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib  
   (Right-click → Save As, or open the URL in a browser)
-- **Save to:** `C:\oss-cad-suite\sky130_fd_sc_hd__tt_025C_1v80.lib`
+- **Create New Folder** Create a new folder under C:\digital-design-tools\ and name it skywater-pdk
+- **Save to:** `C:\digital-design-tools\skywater-pdk\sky130_fd_sc_hd__tt_025C_1v80.lib`
 - **What it is:** Typical corner (25°C, 1.8V), 334 standard cells, ~12 MB
 
 **Cell naming convention:**
