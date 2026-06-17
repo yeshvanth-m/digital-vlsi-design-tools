@@ -6,9 +6,10 @@
 
 Bundles **Yosys** (synthesis), **Icarus Verilog** (simulation), and **GTKWave** (waveforms).
 
-- **Download:** https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2026-05-28/oss-cad-suite-windows-x64-20260528.exe
 - **Create New Folder** Create a new folder under C drive and name it digital-design-tools: C:\digital-design-tools\
-- **Install:** Double-click the `.exe` → it will extract to `C:\digital-design-tools\oss-cad-suite\`
+- **Download:** https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2026-05-28/oss-cad-suite-windows-x64-20260528.exe
+- **Move:** Move the downloaded file `oss-cad-suite-windows-x64-20260528` inside the newly created folder C:\digital-design-tools\
+- **Install:** Now double-click the `.exe` → it will extract to `C:\digital-design-tools\oss-cad-suite\`
 - **Open:** Double-click `C:\digital-design-tools\oss-cad-suite\start.bat`  
   A terminal opens with all tools ready. Prompt shows `[OSS CAD Suite]`.
 - **Verify:** Type `yosys -V` and `iverilog -V` in that terminal.
