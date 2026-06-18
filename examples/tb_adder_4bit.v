@@ -26,7 +26,7 @@ module tb_adder_4bit;
   endtask
 
   initial begin
-    $dumpfile("adder_4bit.vcd");
+    $dumpfile("sim/adder_4bit.vcd");
     $dumpvars(0, tb_adder_4bit);
 
     check(4'd0,  4'd0,  5'd0);

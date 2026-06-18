@@ -1,0 +1,2 @@
+# This folder holds generated synthesis artifacts (gate-level netlists and schematic SVG/DOT files).
+# The files themselves are git-ignored; this .gitkeep keeps the empty folder in the repo.

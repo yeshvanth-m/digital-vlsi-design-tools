@@ -1,0 +1,2 @@
+# This folder holds generated simulation artifacts (.vvp compiled sims and .vcd waveforms).
+# The files themselves are git-ignored; this .gitkeep keeps the empty folder in the repo.

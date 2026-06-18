@@ -141,7 +141,112 @@ yosys -p "read_verilog design.v; synth -top top_module; stat"
 
 ---
 
-## 3. Example 1: Boolean Optimization
+## 3. Simulation Flow (Icarus Verilog + Surfer)
+
+**Always simulate your RTL before you synthesize it.** Simulation checks that the *behavior* is correct; synthesis then turns that verified behavior into gates. Here we simulate the 4-bit adder that you will synthesize in Example 2.
+
+> **Generated files go in `sim/`.** The `.vvp` (compiled simulation) and `.vcd` (waveform) are written into the `sim/` folder so `examples/` keeps only source. The `sim/` folder ships with this repo — make sure it exists before running.
+
+### Design under test: `examples/adder_4bit.v`
+
+```verilog
+module adder_4bit(
+  input  [3:0] a,
+  input  [3:0] b,
+  output [4:0] y
+);
+  assign y = a + b;
+endmodule
+```
+
+### Testbench: `examples/tb_adder_4bit.v`
+
+```verilog
+module tb_adder_4bit;
+  reg  [3:0] a, b;
+  wire [4:0] y;
+
+  adder_4bit dut(.a(a), .b(b), .y(y));
+
+  integer pass_count = 0;
+  integer fail_count = 0;
+
+  task check;
+    input [3:0] a_in, b_in;
+    input [4:0] expected;
+    begin
+      a = a_in; b = b_in; #10;
+      if (y !== expected) begin
+        $display("FAIL: a=%d b=%d expected=%d got=%d", a_in, b_in, expected, y);
+        fail_count = fail_count + 1;
+      end else begin
+        pass_count = pass_count + 1;
+      end
+    end
+  endtask
+
+  initial begin
+    $dumpfile("sim/adder_4bit.vcd");
+    $dumpvars(0, tb_adder_4bit);
+
+    check(4'd0,  4'd0,  5'd0);
+    check(4'd3,  4'd5,  5'd8);
+    check(4'd7,  4'd8,  5'd15);
+    check(4'd15, 4'd1,  5'd16);   // carry out
+    check(4'd15, 4'd15, 5'd30);   // maximum
+    check(4'd9,  4'd6,  5'd15);
+    check(4'd1,  4'd1,  5'd2);
+    check(4'd10, 4'd5,  5'd15);
+
+    $display("---------------------------");
+    $display("Results: %0d passed, %0d failed", pass_count, fail_count);
+    $display("---------------------------");
+
+    if (fail_count == 0)
+      $display("ALL TESTS PASSED");
+    else
+      $display("SOME TESTS FAILED");
+
+    $finish;
+  end
+
+  initial $monitor("t=%0t a=%2d b=%2d y=%2d", $time, a, b, y);
+endmodule
+```
+
+### Commands:
+
+```bash
+# Compile  ->  writes sim/adder_4bit.vvp
+iverilog -o sim/adder_4bit.vvp examples/adder_4bit.v examples/tb_adder_4bit.v
+
+# Simulate  ->  generates sim/adder_4bit.vcd
+vvp sim/adder_4bit.vvp
+
+# View waveforms
+C:\digital-design-tools\surfer\surfer.exe sim/adder_4bit.vcd
+```
+
+### Expected console output:
+
+```
+t=0 a= 0 b= 0 y= 0
+t=10 a= 3 b= 5 y= 8
+t=20 a= 7 b= 8 y=15
+t=30 a=15 b= 1 y=16
+t=40 a=15 b=15 y=30
+t=50 a= 9 b= 6 y=15
+t=60 a= 1 b= 1 y= 2
+t=70 a=10 b= 5 y=15
+---------------------------
+Results: 8 passed, 0 failed
+---------------------------
+ALL TESTS PASSED
+```
+
+---
+
+## 4. Example 1: Boolean Optimization
 
 This demonstrates how Yosys optimizes redundant Boolean logic.
 
@@ -207,17 +312,17 @@ With Graphviz installed (see Setup), render a schematic with `show` (Windows: us
 
 ```bash
 # Generic gates (5 cells) — both outputs share the same AND/OR logic
-yosys -p "read_verilog examples/bool_optimize.v; synth -top bool_optimize -noabc; abc -g AND,OR,XOR; clean; show -format svg -viewer none -prefix examples\bool_optimize_show"
+yosys -p "read_verilog examples/bool_optimize.v; synth -top bool_optimize -noabc; abc -g AND,OR,XOR; clean; show -format svg -viewer none -prefix build\bool_optimize_show"
 
 # SkyWater 130nm — the whole function collapses to a single maj3_1 cell
-yosys -p "read_verilog examples/bool_optimize.v; synth -top bool_optimize; abc -liberty skywater-pdk/sky130_fd_sc_hd__tt_025C_1v80.lib; show -format svg -viewer none -prefix examples\bool_optimize_sky130_show"
+yosys -p "read_verilog examples/bool_optimize.v; synth -top bool_optimize; abc -liberty skywater-pdk/sky130_fd_sc_hd__tt_025C_1v80.lib; show -format svg -viewer none -prefix build\bool_optimize_sky130_show"
 ```
 
 Open the generated `.svg` in a browser or VS Code. The sky130 schematic clearly shows `y_minimal` and `y_redundant` driven by one `sky130_fd_sc_hd__maj3_1`.
 
 ---
 
-## 4. Example 2: Behavioral Adder Decomposition
+## 5. Example 2: Behavioral Adder Decomposition
 
 This shows how a simple `a + b` is decomposed into gate-level hardware.
 
@@ -285,10 +390,10 @@ yosys -p "read_verilog examples/adder_4bit.v; synth -top adder_4bit; dfflibmap -
 ### Step C: Export Gate-Level Netlist
 
 ```bash
-yosys -p "read_verilog examples/adder_4bit.v; synth -top adder_4bit; abc -liberty skywater-pdk/sky130_fd_sc_hd__tt_025C_1v80.lib; write_verilog examples/adder_4bit_netlist.v"
+yosys -p "read_verilog examples/adder_4bit.v; synth -top adder_4bit; abc -liberty skywater-pdk/sky130_fd_sc_hd__tt_025C_1v80.lib; write_verilog build/adder_4bit_netlist.v"
 ```
 
-This produces a structural Verilog file (`examples/adder_4bit_netlist.v`, ~3 KB) referencing sky130 cells — the same format sent to place & route tools.
+This produces a structural Verilog file (`build/adder_4bit_netlist.v`, ~3 KB) referencing sky130 cells — the same format sent to place & route tools.
 
 > **If no netlist file appears:** check the synthesis log for an `ERROR`. A `-p` script stops at the **first** failed command, so if an earlier step fails (most commonly `abc -liberty` not finding the `.lib`), `write_verilog` never runs and no file is written. The `-liberty` and output paths are resolved relative to your **current working directory**, so run this from `C:\digital-design-tools\` (or adjust the paths accordingly).
 
@@ -298,24 +403,24 @@ With Graphviz installed (see Setup), Yosys's `show` command renders a schematic 
 
 ```bash
 # Add Graphviz to PATH for this session (cmd):  set PATH=C:\digital-design-tools\graphviz\bin;%PATH%
-yosys -p "read_verilog examples/adder_4bit.v; synth -top adder_4bit; abc -liberty skywater-pdk/sky130_fd_sc_hd__tt_025C_1v80.lib; show -format svg -viewer none -prefix examples\adder_4bit_show"
+yosys -p "read_verilog examples/adder_4bit.v; synth -top adder_4bit; abc -liberty skywater-pdk/sky130_fd_sc_hd__tt_025C_1v80.lib; show -format svg -viewer none -prefix build\adder_4bit_show"
 ```
 
-This writes `examples/adder_4bit_show.svg` (~55 KB), which you can open in a browser or VS Code.
+This writes `build/adder_4bit_show.svg` (~55 KB), which you can open in a browser or VS Code.
 
-> **Windows note:** use a **backslash** in `-prefix` when it includes a folder (`examples\adder_4bit_show`). Yosys finishes by running a `move` command, and Windows `move` fails on forward-slash paths with `ERROR: Shell command failed!`. A slash-free prefix (run from inside the folder) also works.
+> **Windows note:** use a **backslash** in `-prefix` when it includes a folder (`build\adder_4bit_show`). Yosys finishes by running a `move` command, and Windows `move` fails on forward-slash paths with `ERROR: Shell command failed!`. A slash-free prefix (run from inside the folder) also works.
 
 Without Graphviz, write just the `.dot` and view it elsewhere:
 
 ```bash
-yosys -p "read_verilog examples/adder_4bit.v; synth -top adder_4bit; abc -liberty skywater-pdk/sky130_fd_sc_hd__tt_025C_1v80.lib; show -format dot -viewer none -prefix examples/adder_4bit_show"
+yosys -p "read_verilog examples/adder_4bit.v; synth -top adder_4bit; abc -liberty skywater-pdk/sky130_fd_sc_hd__tt_025C_1v80.lib; show -format dot -viewer none -prefix build/adder_4bit_show"
 ```
 
-Open `examples/adder_4bit_show.dot` with the VS Code **Graphviz Interactive Preview** extension or paste it into https://dreampuf.github.io/GraphvizOnline.
+Open `build/adder_4bit_show.dot` with the VS Code **Graphviz Interactive Preview** extension or paste it into https://dreampuf.github.io/GraphvizOnline.
 
 ---
 
-## 5. Example 3: Latch Inference (What NOT to Do)
+## 6. Example 3: Latch Inference (What NOT to Do)
 
 ### Source: `examples/latch_bad.v`
 
@@ -367,96 +472,117 @@ yosys -p "read_verilog examples/latch_fixed.v; synth -top latch_fixed; stat"
 
 ---
 
-## 6. Simulation Flow (Icarus Verilog + Surfer)
+## 7. Example 4: Blocking (`=`) vs Non-Blocking (`<=`) Assignments
 
-### Testbench: `examples/tb_adder_4bit.v`
+This is the single most important RTL coding concept for sequential logic. The two modules in `examples/blocking_nonblocking.v` contain the **exact same three lines** — "add 1", chained through `b`, `c`, `d`. The **only** difference is `=` versus `<=`, yet they synthesize to **completely different hardware**.
+
+### Source: `examples/blocking_nonblocking.v`
 
 ```verilog
-module tb_adder_4bit;
-  reg  [3:0] a, b;
-  wire [4:0] y;
-
-  adder_4bit dut(.a(a), .b(b), .y(y));
-
-  integer pass_count = 0;
-  integer fail_count = 0;
-
-  task check;
-    input [3:0] a_in, b_in;
-    input [4:0] expected;
-    begin
-      a = a_in; b = b_in; #10;
-      if (y !== expected) begin
-        $display("FAIL: a=%d b=%d expected=%d got=%d", a_in, b_in, expected, y);
-        fail_count = fail_count + 1;
-      end else begin
-        pass_count = pass_count + 1;
-      end
+module add_blocking (
+    input  wire       clk,
+    input  wire [7:0] a,
+    output reg  [7:0] d
+);
+    reg [7:0] b, c;
+    always @(posedge clk) begin
+        b = a + 1;   // b updated immediately
+        c = b + 1;   // uses the NEW b  ->  c = a + 2
+        d = c + 1;   // uses the NEW c  ->  d = a + 3   (one clock)
     end
-  endtask
+endmodule
 
-  initial begin
-    $dumpfile("adder_4bit.vcd");
-    $dumpvars(0, tb_adder_4bit);
-
-    check(4'd0,  4'd0,  5'd0);
-    check(4'd3,  4'd5,  5'd8);
-    check(4'd7,  4'd8,  5'd15);
-    check(4'd15, 4'd1,  5'd16);   // carry out
-    check(4'd15, 4'd15, 5'd30);   // maximum
-    check(4'd9,  4'd6,  5'd15);
-    check(4'd1,  4'd1,  5'd2);
-    check(4'd10, 4'd5,  5'd15);
-
-    $display("---------------------------");
-    $display("Results: %0d passed, %0d failed", pass_count, fail_count);
-    $display("---------------------------");
-
-    if (fail_count == 0)
-      $display("ALL TESTS PASSED");
-    else
-      $display("SOME TESTS FAILED");
-
-    $finish;
-  end
-
-  initial $monitor("t=%0t a=%2d b=%2d y=%2d", $time, a, b, y);
+module add_nonblocking (
+    input  wire       clk,
+    input  wire [7:0] a,
+    output reg  [7:0] d
+);
+    reg [7:0] b, c;
+    always @(posedge clk) begin
+        b <= a + 1;  // all RHS use OLD values, scheduled together
+        c <= b + 1;  // uses OLD b
+        d <= c + 1;  // uses OLD c  ->  forms a 3-stage pipeline
+    end
 endmodule
 ```
 
-### Commands:
+### The Idea
+
+- **Blocking (`=`)** executes top-to-bottom like software: `b` updates, then `c` uses the **new** `b`, then `d` uses the **new** `c`. It all happens in one clock, so it collapses to **one register** (`d`) fed by combinational logic computing `a + 3`.
+- **Non-blocking (`<=`)** samples every right-hand side from the **old** (pre-clock) values and updates them together at the edge. `b`, `c`, and `d` each become a register, forming a **3-stage pipeline**: a new `a` needs extra clocks to ripple through to `d`.
+
+### Step A: Simulate Both Side by Side
 
 ```bash
-# Compile
-iverilog -o sim.vvp examples/adder_4bit.v examples/tb_adder_4bit.v
+# Compile the design + testbench  ->  writes sim/blocking_nonblocking.vvp
+iverilog -o sim/blocking_nonblocking.vvp examples/blocking_nonblocking.v examples/tb_blocking_nonblocking.v
 
-# Simulate (generates adder_4bit.vcd)
-vvp sim.vvp
+# Simulate  ->  generates sim/blocking_nonblocking.vcd
+vvp sim/blocking_nonblocking.vvp
 
 # View waveforms
-C:\digital-design-tools\surfer\surfer.exe adder_4bit.vcd
+C:\digital-design-tools\surfer\surfer.exe sim/blocking_nonblocking.vcd
 ```
 
-### Expected console output:
+**Expected console output** (times in ps; clock period = 10 000 ps = 10 ns). Notice `d_blocking` reacts in the **same** clock the input is sampled, while `d_nonblocking` **lags** and shows `x` until its pipeline fills:
 
 ```
-t=0 a= 0 b= 0 y= 0
-t=10 a= 3 b= 5 y= 8
-t=20 a= 7 b= 8 y=15
-t=30 a=15 b= 1 y=16
-t=40 a=15 b=15 y=30
-t=50 a= 9 b= 6 y=15
-t=60 a= 1 b= 1 y= 2
-t=70 a=10 b= 5 y=15
----------------------------
-Results: 8 passed, 0 failed
----------------------------
-ALL TESTS PASSED
+ time | a  | d_blocking | d_nonblocking
+    0 |  0 |      x     |       x
+ 5000 |  0 |      3     |       x
+10000 | 10 |      3     |       x
+15000 | 10 |     13     |       x
+20000 | 20 |     13     |       x
+25000 | 20 |     23     |       3
+30000 | 30 |     23     |       3
+35000 | 30 |     33     |      13
+40000 | 40 |     33     |      13
+45000 | 40 |     43     |      23
+50000 | 50 |     43     |      23
+55000 | 50 |     53     |      33
+65000 | 50 |     53     |      43
+75000 | 50 |     53     |      53
 ```
+
+**What the waveform teaches:**
+- `d_blocking` follows `a + 3` with a single clock of latency — the three `=` lines collapsed into one register stage.
+- `d_nonblocking` lags by ~2 **extra** clocks and starts as `x` while `b → c → d` fill up — proof that `<=` built a pipeline.
+
+### Step B: Synthesize Both — Same Source, Different Hardware
+
+```bash
+yosys -p "read_verilog examples/blocking_nonblocking.v; synth -top add_blocking; stat"
+yosys -p "read_verilog examples/blocking_nonblocking.v; synth -top add_nonblocking; stat"
+```
+
+**Result — the punchline:**
+
+| Module | Flip-flops (`$_DFF_P_`) | Register stages | Total cells |
+|--------|------------------------:|-----------------|------------:|
+| `add_blocking` (`=`)     |  8 | 1 (just `d`)        | 22 |
+| `add_nonblocking` (`<=`) | 24 | 3 (`b`, `c`, `d`)   | 66 |
+
+The blocking version keeps **one** 8-bit register; the non-blocking version keeps **three** — **3× the flip-flops** from a description that looks almost identical.
+
+### Step C: View the Schematics
+
+```bash
+# (Graphviz on PATH — see Setup.)  Note the backslash in -prefix on Windows.
+yosys -p "read_verilog examples/blocking_nonblocking.v; synth -top add_blocking; show -format svg -viewer none -prefix build\blocking_show"
+yosys -p "read_verilog examples/blocking_nonblocking.v; synth -top add_nonblocking; show -format svg -viewer none -prefix build\nonblocking_show"
+```
+
+Open the two SVGs side by side: `build/blocking_show.svg` (~94 KB) shows a **single** bank of flip-flops; `build/nonblocking_show.svg` (~295 KB) shows **three** banks chained as a pipeline.
+
+### Rule of Thumb
+
+- Use **non-blocking `<=`** for sequential logic (flip-flops) inside `@(posedge clk)`.
+- Use **blocking `=`** for combinational logic inside `@(*)`.
+- Using `=` where you meant a pipeline (or mixing the two in one block) produces hardware that does not match your intent — and often simulation/synthesis mismatches.
 
 ---
 
-## 7. Quick Reference: Full Synthesis + Simulation Workflow
+## 8. Quick Reference: Full Synthesis + Simulation Workflow
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -476,20 +602,25 @@ ALL TESTS PASSED
 
 ---
 
-## 8. File Organization
+## 9. File Organization
 
 ```
-examples/
-├── bool_optimize.v         # Boolean optimization demo
-├── adder_4bit.v            # Behavioral adder (a + b)
-├── tb_adder_4bit.v         # Adder testbench
-├── latch_bad.v             # Latch inference (bad practice)
-└── latch_fixed.v           # Latch fixed (good practice)
+examples/                        # Verilog source (tracked in git)
+├── bool_optimize.v              # Boolean optimization demo
+├── adder_4bit.v                 # Behavioral adder (a + b)
+├── tb_adder_4bit.v              # Adder testbench
+├── latch_bad.v                  # Latch inference (bad practice)
+├── latch_fixed.v                # Latch fixed (good practice)
+├── blocking_nonblocking.v       # Blocking (=) vs non-blocking (<=) demo
+└── tb_blocking_nonblocking.v    # Blocking/non-blocking testbench
+
+sim/                             # Generated: .vvp (compiled sim) + .vcd (waveforms)
+build/                           # Generated: gate-level netlists + schematic SVGs
 ```
 
 ---
 
-## 9. Troubleshooting
+## 10. Troubleshooting
 
 | Issue | Fix |
 |-------|-----|
@@ -499,7 +630,8 @@ examples/
 | Liberty file not found | Reference the full path `skywater-pdk/sky130_fd_sc_hd__tt_025C_1v80.lib`, or copy the `.lib` into the working directory |
 | `write_verilog` produces no netlist file | An earlier command failed (often `abc -liberty` not finding the `.lib`); a `-p` script aborts on the first error before reaching `write_verilog`. Fix the error and re-run. |
 | `show` fails with `dot: command not found` / no image | Graphviz isn't on PATH. Install it (see Setup) and run `set PATH=C:\digital-design-tools\graphviz\bin;%PATH%`, or use `show -format dot -viewer none` and open the `.dot` elsewhere. |
-| `show` fails with `ERROR: Shell command failed!` | Windows `move` rejects forward slashes. Use a backslash in `-prefix` (e.g. `-prefix examples\adder_4bit_show`) or a slash-free prefix. |
+| `show` fails with `ERROR: Shell command failed!` | Windows `move` rejects forward slashes. Use a backslash in `-prefix` (e.g. `-prefix build\adder_4bit_show`) or a slash-free prefix. |
+| `iverilog`/`vvp` error: cannot open `sim/...vcd` | The `sim/` (or `build/`) folder is missing. It ships with the repo; recreate it with `mkdir sim` / `mkdir build` if needed, then re-run from `C:\digital-design-tools\`. |
 | Surfer shows empty waveform | Expand hierarchy in left panel → select signals → press **+** → **Shift+F** to zoom fit |
 | Surfer flagged by Windows Defender | False positive for Rust binaries; verify with [VirusTotal](https://www.virustotal.com/) if concerned |
 | GTKWave shows no signals | Click signals in left panel → "Append" → Ctrl+Shift+F to zoom fit |

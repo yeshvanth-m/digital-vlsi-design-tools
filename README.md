@@ -60,7 +60,11 @@ C:\digital-design-tools\
 │   ├── adder_4bit.v
 │   ├── tb_adder_4bit.v
 │   ├── latch_bad.v
-│   └── latch_fixed.v
+│   ├── latch_fixed.v
+│   ├── blocking_nonblocking.v
+│   └── tb_blocking_nonblocking.v
+├── sim\                       ← generated when you simulate (.vvp + .vcd)
+├── build\                     ← generated when you synthesize (netlists + schematic SVGs)
 ├── oss-cad-suite\             ← downloaded (Yosys, iverilog, vvp, gtkwave)
 ├── surfer\                    ← downloaded (surfer.exe)
 ├── graphviz\                  ← downloaded (bin\dot.exe)
@@ -75,10 +79,11 @@ The `README.md`, `docs\`, and `examples\` come from this repo. The four tool fol
 
 From the OSS CAD Suite terminal (started in `C:\digital-design-tools\`):
 
+- **Simulate** a 4-bit adder testbench and generate a waveform (`iverilog` + `vvp`) — *always simulate first*
+- **View waveforms** in Surfer, and **view schematics** with `yosys show` + Graphviz
 - **Synthesize** Verilog to gates and real sky130 cells, and read area/cell reports (`yosys`)
 - **See optimization** collapse redundant Boolean logic to a single gate
-- **Simulate** a 4-bit adder testbench and generate a waveform (`iverilog` + `vvp`)
-- **View waveforms** in Surfer, and **view schematics** with `yosys show` + Graphviz
+- **Compare blocking (`=`) vs non-blocking (`<=`)** assignments — same 3 lines, but one builds a single register and the other a 3-stage pipeline (seen in both waves and netlist)
 
 Each exercise — with exact commands and expected output — is in the guide:
 **[docs/yosys-setup-and-examples.md](docs/yosys-setup-and-examples.md)**
@@ -93,7 +98,7 @@ Each exercise — with exact commands and expected output — is in the guide:
 | [docs/yosys-setup-and-examples.md](docs/yosys-setup-and-examples.md) | Full setup guide + worked examples |
 | `examples/` | Verilog designs and the adder testbench |
 
-> Generated files (`*.vcd`, `*.vvp`) are git-ignored — they're created when you run the exercises.
+> Generated files go in `sim/` (`.vcd`, `.vvp`) and `build/` (netlists, schematic SVGs) — both are git-ignored and created when you run the exercises.
 
 ---
 

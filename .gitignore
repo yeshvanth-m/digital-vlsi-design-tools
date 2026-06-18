@@ -1,2 +1,7 @@
-﻿*.vcd
+﻿# Simulation artifacts (compiled sims + waveforms, generated into sim/)
+*.vcd
 *.vvp
+
+# Synthesis artifacts (netlists + schematics, generated into build/)
+build/*
+!build/.gitkeep
