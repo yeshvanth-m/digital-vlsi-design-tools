@@ -4,9 +4,9 @@
 // Same machine as mealy_101_fsm.v, written as boolean equations on the state
 // bits {q1,q0}. State encoding S0=00, S1=01, S2=10 (11 unused).
 //
-// Derived equations:
+// Derived equations (literal sum-of-minterms from the truth table):
 //   n0 = w
-//   n1 = q0 & ~w
+//   n1 = ~q1 & q0 & ~w     (full expansion; not minimized via the unused 11)
 //   z  = q1 & w            (Mealy: state AND input)
 //
 // Run:
@@ -25,7 +25,7 @@ module mealy_101_bool (
 
   reg  q1, q0;          // state bits {q1,q0}
 
-  wire n1 = q0 & ~w;
+  wire n1 = ~q1 & q0 & ~w;
   wire n0 = w;
 
   always @(posedge clk or negedge rst_n) begin
@@ -36,3 +36,4 @@ module mealy_101_bool (
   assign z = q1 & w;
 
 endmodule
+

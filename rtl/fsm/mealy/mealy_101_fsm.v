@@ -18,6 +18,6 @@ module mealy_101_fsm (
     S2:      next = w ? S1 : S0;   // overlap
     default: next = S0;
   endcase
-
-  assign z = (state == S2) & w;    // Mealy: output = state AND input
+  // Mealy: output = state AND input
+  assign z = (state == S2) & w;    
 endmodule

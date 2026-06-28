@@ -19,6 +19,6 @@ module moore_101_fsm (
     S3:      next = w ? S1 : S2;   // overlap
     default: next = S0;
   endcase
-
-  assign z = (state == S3);        // Moore: output = state only
+  // Moore: output = state only
+  assign z = (state == S3);        
 endmodule
