@@ -20,7 +20,7 @@ module mealy_101_bool (
   input  wire clk,
   input  wire rst_n,    // active-low async reset
   input  wire w,        // serial input bit
-  output wire z          // 1 = "101" detected
+  output wire z         // 1 = "101" detected
 );
 
   reg  q1, q0;          // state bits {q1,q0}

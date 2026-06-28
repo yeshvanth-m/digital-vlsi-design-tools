@@ -23,21 +23,23 @@ module tb_blocking_nonblocking;
     initial clk = 1'b0;
     always #5 clk = ~clk;
 
-    // Change `a` on the negedge so it is stable across each posedge.
+    // Drive `a` on the posedge with a non-blocking <=. The DUT samples the OLD
+    // value at the edge (active region) while `a` updates afterwards (NBA
+    // region), so there is no race even though both act on the same posedge.
     initial begin
         $dumpfile("sim/blocking_nonblocking.vcd");
         $dumpvars(0, tb_blocking_nonblocking);
 
-        a = 8'd0;
-        @(negedge clk); a = 8'd10;
-        @(negedge clk); a = 8'd20;
-        @(negedge clk); a = 8'd30;
-        @(negedge clk); a = 8'd40;
-        @(negedge clk); a = 8'd50;
-        @(negedge clk);          // hold 50 so the pipeline can drain
-        @(negedge clk);
-        @(negedge clk);
-        @(negedge clk);
+        a <= 8'd0;
+        @(posedge clk); a <= 8'd10;
+        @(posedge clk); a <= 8'd20;
+        @(posedge clk); a <= 8'd30;
+        @(posedge clk); a <= 8'd40;
+        @(posedge clk); a <= 8'd50;
+        @(posedge clk);          // hold 50 so the pipeline can drain
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
         $display("Done");
         $finish;
     end

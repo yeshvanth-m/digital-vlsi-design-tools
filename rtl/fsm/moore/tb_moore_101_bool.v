@@ -5,7 +5,7 @@
 // machine, so behaviour must match exactly.
 //
 // Run:
-//   iverilog -o sim/moore_101_bool.vvp examples/moore_101_bool.v examples/tb_moore_101_bool.v
+//   iverilog -o sim/moore_101_bool.vvp rtl/fsm/moore/moore_101_bool.v rtl/fsm/moore/tb_moore_101_bool.v
 //   vvp sim/moore_101_bool.vvp
 //   gtkwave sim/moore_101_bool.vcd
 // ===========================================================================
@@ -31,13 +31,16 @@ module tb_moore_101_bool;
     $dumpvars(0, tb_moore_101_bool);
 
     rst_n = 1'b0; w = 1'b0;
-    @(negedge clk);
-    @(negedge clk);
-    rst_n = 1'b1;
+    @(posedge clk);
+    @(posedge clk);
+    rst_n <= 1'b1;            // deassert reset synchronously
 
+    // Drive each input bit on the posedge with a non-blocking <= (the DUT
+    // samples the OLD value at the edge, the new value lands just after), then
+    // sample the output mid-cycle on the negedge where everything is stable.
     for (i = 0; i < N; i = i + 1) begin
-      w = WSEQ[i];
-      #1;
+      w <= WSEQ[i];          // apply input on the posedge
+      @(negedge clk);        // sample mid-cycle (race-free read point)
       if (z !== ZEXP[i]) begin
         $display("FAIL: cycle=%0d w=%b z=%b expected=%b (t=%0t)",
                  i, w, z, ZEXP[i], $time);
@@ -45,7 +48,7 @@ module tb_moore_101_bool;
       end else begin
         pass_count = pass_count + 1;
       end
-      @(negedge clk);
+      @(posedge clk);        // consume the bit, advance to the next cycle
     end
 
     $display("---------------------------");

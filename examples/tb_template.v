@@ -9,6 +9,16 @@
 //   4. Instantiate the DUT.
 //   5. Add stimulus inside the `initial` block (use check() for self-checking).
 //
+// Driving convention (synchronous designs):
+//   * DRIVE inputs on the posedge with a non-blocking assignment (<=).
+//       - The DUT samples the OLD value at the edge (active region), and the
+//         new value lands just after (NBA region) -> no sample/drive race,
+//         even though both happen on the same posedge.
+//   * SAMPLE/CHECK outputs on the negedge (mid-cycle), where every signal is
+//     settled and far from any clock edge.
+//   * One bit/transaction per clock:  drive (posedge) -> check (negedge) ->
+//     advance (posedge).
+//
 // Run:  iverilog -o sim/<name>.vvp examples/<name>.v examples/tb_<name>.v
 //       vvp sim/<name>.vvp
 // View: gtkwave sim/<name>.vcd
@@ -62,8 +72,8 @@ module tb_template;
   task do_reset;
     begin
       rst_n = 1'b0;
-      repeat (2) @(negedge clk);
-      rst_n = 1'b1;
+      repeat (2) @(posedge clk);
+      rst_n <= 1'b1;
     end
   endtask
 
@@ -74,9 +84,12 @@ module tb_template;
 
     do_reset;
 
-    // TODO: drive inputs and call check(), e.g.
-    // in_signal = 8'd5; @(negedge clk);
+    // TODO: drive inputs on the posedge with non-blocking <=, then sample on
+    //       the negedge (mid-cycle, race-free), e.g.
+    // in_signal <= 8'd5;   // drive on posedge
+    // @(negedge clk);      // sample mid-cycle
     // check(out_signal, 8'd5, "passthrough");
+    // @(posedge clk);      // advance to next cycle
 
     // --- Report ---------------------------------------------------------
     $display("---------------------------");
