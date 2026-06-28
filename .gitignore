@@ -5,3 +5,8 @@
 # Synthesis artifacts (netlists + schematics, generated into build/)
 build/*
 !build/.gitkeep
+
+#
+graphviz/*
+oss-cad-suite/*
+surfer/*
